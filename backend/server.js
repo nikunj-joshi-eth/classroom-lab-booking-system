@@ -5,10 +5,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const { refreshStorage } = require('./storage');
 
 const PORT = 3000;
 const EXE = path.join(__dirname, process.platform === 'win32' ? 'booking.exe' : 'booking');
 const FRONTEND = path.join(__dirname, '..', 'frontend');
+const WRITING_ACTIONS = new Set(['addResource', 'sortResources', 'bookResource', 'cancelBooking']);
 
 // For each action: the answers the C program will ask for, in the SAME order as its questions
 const ACTIONS = {
@@ -43,7 +45,12 @@ function runC(role, action, answers) {
     child.stdout.on('data', (d) => (output += d));
     child.stdin.on('error', () => {});
     child.on('error', () => resolve('Cannot start the C program. Did you compile it? (see README steps)'));
-    child.on('close', () => resolve(output));
+    child.on('close', (code) => {
+      if (code === 0 && WRITING_ACTIONS.has(action) && !output.includes('Warning: cannot write ')) {
+        refreshStorage(__dirname);
+      }
+      resolve(output);
+    });
     child.stdin.write(answers.join('\n') + '\n');
     child.stdin.end();
   }));
@@ -86,4 +93,5 @@ const server = http.createServer((req, res) => {
   }
 });
 
+refreshStorage(__dirname);
 server.listen(PORT, () => console.log('Open http://localhost:' + PORT));
