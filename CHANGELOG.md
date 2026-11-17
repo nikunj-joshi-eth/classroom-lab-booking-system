@@ -1,6 +1,11 @@
+## Role-based project synchronization
+
+- Imported the supplied C99 console and API implementation, Node.js bridge, static frontend, and C-only presentation and report.
+- Kept the earlier faculty-console source for the existing regression suite.
+
 ## Faculty-oriented three-member review
 
-- Team: Nikunj Joshi (137), Resource Management; Khushi (148), Booking Management and Reports; Mansi (131), Cancellation and Waiting List.
+- Team: Nikunj Joshi (137), Resource Management; Mansi (131), Booking Management and Reports; Khushi (148), Cancellation and Waiting List.
 - Corrected module credits and faculty prompts/table headings; shortened redundant comments.
 - Kept the original startup waiting-list algorithm; reverted the earlier traversal simplification to keep this update minimal.
 - Preserved validation, booking history, reports, storage limits and safe file handling. No frontend or database added.
@@ -33,7 +38,7 @@ The structure, menu, module split and all existing features are unchanged. Only 
 | 1 | A failed save (e.g. disk full) could cut a data file short and destroy old records | Data is written to `<file>.tmp` first (`openTemp`, `commitFile`); the old file is replaced only if the new one was written completely. A leftover temp file is removed on failure | Shared (file handling) |
 | 2 | If a data file could not be read, the next save could overwrite it with incomplete data | `loadProblem` flag: when a file cannot be read, saving is switched off and a warning is shown (`openForRead`, `closeRead`) | Shared (file handling) |
 | 3 | Data-file records with extra fields (e.g. `101 Room_101 1 60 JUNK`) were accepted, and names longer than 29 characters were silently cut | Each `sscanf` now has a trailing `%c` and must match exactly the expected number of fields; names and dates are read into larger temporary buffers and rejected if too long | Shared (file handling) |
-| 4 | A waiting request for a slot that was already free stayed in the list, so someone else could book the slot first | New `processAllWaiting()` runs after loading and gives every free slot to its earliest waiting request. `processWaiting()` now returns 1 or 0 | Module 3 (Mansi) |
+| 4 | A waiting request for a slot that was already free stayed in the list, so someone else could book the slot first | New `processAllWaiting()` runs after loading and gives every free slot to its earliest waiting request. `processWaiting()` now returns 1 or 0 | Module 3 (Khushi) |
 | 5 | A person could be loaded as waiting for a slot they already hold | `loadAll()` rejects such a record | Shared (file handling) |
 | 6 | A data file could contain a very large booking ID that the Cancel prompt (maximum 999999) could not accept | Booking IDs in data files must be 1 to 99999 (`MAX_BOOKING_ID`), so new IDs always stay cancellable | Shared / Module 2 |
 | 7 | Whitespace-only lines and over-long lines in data files were not handled cleanly | New `isBlankLine()` and `getFileLine()` skip blank lines and reject over-long lines | Shared (file handling) |

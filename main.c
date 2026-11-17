@@ -1,7 +1,7 @@
 /*
  * Classroom and Laboratory Resource Booking System
  * Language : C (standard C99, no external libraries)
- * Team     : Nikunj Joshi (137), Khushi (148), Mansi (131)
+ * Team     : Nikunj Joshi (137), Mansi (131), Khushi (148)
  *
  * Data structures used:
  *   - Array of structures : resources and bookings
@@ -292,7 +292,7 @@ void sortResources(void) {
 }
 
 /* =====================================================================
- * MODULE 2 : BOOKING MANAGEMENT AND REPORTS    (Khushi - 25/SET/BCSE/148)
+ * MODULE 2 : BOOKING MANAGEMENT AND REPORTS    (Mansi - 25/SET/BCSE/131)
  * DSA: Arrays, Structures, Searching
  * ===================================================================== */
 
@@ -392,7 +392,7 @@ void viewBookings(void) {
 }
 
 /* =====================================================================
- * MODULE 3 : CANCELLATION AND WAITING LIST   (Mansi - 25/SET/BCSE/131)
+ * MODULE 3 : CANCELLATION AND WAITING LIST   (Khushi - 25/SET/BCSE/148)
  * DSA: Linked List, Queue (FIFO)
  * ===================================================================== */
 
@@ -523,7 +523,7 @@ void viewWaitingList(void) {
 }
 
 /* =====================================================================
- * MODULE 2 (continued) : REPORTS AND STATISTICS   (Khushi - 25/SET/BCSE/148)
+ * MODULE 2 (continued) : REPORTS AND STATISTICS   (Mansi - 25/SET/BCSE/131)
  * DSA: Arrays, Traversal, Searching
  * ===================================================================== */
 

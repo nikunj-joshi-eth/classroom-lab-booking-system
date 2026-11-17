@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resource Booking System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Resource Booking System</h1>
+
+  <!-- Login screen -->
+  <div id="loginBox" class="box">
+    <h2>Login</h2>
+    <label>Login as</label>
+    <select id="role">
+      <option value="1">Administrator</option>
+      <option value="2">Teacher</option>
+      <option value="3">Student</option>
+    </select>
+    <div id="passRow">
+      <label>Password</label>
+      <input type="password" id="password">
+    </div>
+    <button id="loginBtn">Login</button>
+    <p id="loginMsg" class="error"></p>
+  </div>
+
+  <!-- Main screen (hidden until login) -->
+  <div id="app" class="hidden">
+    <div class="topbar">
+      <span id="who"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+    <div id="menu"></div>
+    <div id="formBox" class="box hidden"></div>
+    <h3>Result</h3>
+    <pre id="output">Choose an option above.</pre>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
