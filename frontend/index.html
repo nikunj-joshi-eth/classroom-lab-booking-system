@@ -3,41 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Resource Booking System</title>
+  <meta name="theme-color" content="#102b29">
+  <title>Campus Rooms | Resource Booking</title>
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <h1>Resource Booking System</h1>
-
-  <!-- Login screen -->
-  <div id="loginBox" class="box">
-    <h2>Login</h2>
-    <label>Login as</label>
-    <select id="role">
-      <option value="1">Administrator</option>
-      <option value="2">Teacher</option>
-      <option value="3">Student</option>
-    </select>
-    <div id="passRow">
-      <label>Password</label>
-      <input type="password" id="password">
+  <main id="loginBox" class="login">
+    <div class="login-intro">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span> Campus Rooms</div>
+      <h1>Find a room for your next class.</h1>
+      <p>Check classroom and laboratory availability, reserve a fixed time slot, or join the waiting list.</p>
     </div>
-    <button id="loginBtn">Login</button>
-    <p id="loginMsg" class="error"></p>
-  </div>
+    <form id="loginForm" class="login-form">
+      <h2>Sign in</h2>
+      <label for="role">Account role</label>
+      <select id="role">
+        <option value="1">Administrator</option>
+        <option value="2">Teacher</option>
+        <option value="3">Student</option>
+      </select>
+      <div id="passRow">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password">
+      </div>
+      <button id="loginBtn" class="primary" type="submit">Sign in</button>
+      <p id="loginMsg" class="error" role="alert"></p>
+    </form>
+  </main>
 
-  <!-- Main screen (hidden until login) -->
-  <div id="app" class="hidden">
-    <div class="topbar">
-      <span id="who"></span>
-      <button id="logoutBtn">Logout</button>
-    </div>
-    <div id="menu"></div>
-    <div id="formBox" class="box hidden"></div>
-    <h3>Result</h3>
-    <pre id="output">Choose an option above.</pre>
-  </div>
+  <div id="app" class="workspace" hidden>
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span> Campus Rooms</div>
+      <nav aria-label="Workspace" id="menu"></nav>
+      <div class="account">
+        <span id="who"></span>
+        <button id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </aside>
+    <main class="content">
+      <div id="notification" class="notice" role="status" aria-atomic="true"></div>
+      <section id="overview" aria-labelledby="overviewTitle">
+        <header class="overview-header">
+          <div>
+            <h1 id="overviewTitle">Room availability</h1>
+            <p>Find a classroom or lab and see which slots are open.</p>
+          </div>
+          <div class="date-control">
+            <label for="day">Timetable date</label>
+            <input id="day" type="date" min="2024-01-01" max="2100-12-31" required>
+          </div>
+        </header>
 
-  <script src="script.js"></script>
+        <dl class="summary" aria-label="Timetable totals">
+          <div><dt>Rooms and labs</dt><dd id="roomCount">—</dd></div>
+          <div><dt>Available slots</dt><dd id="availableCount">—</dd></div>
+          <div><dt>Booked slots</dt><dd id="bookedCount">—</dd></div>
+        </dl>
+
+        <section class="panel timetable" aria-labelledby="tableTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="tableTitle">Daily timetable</h2>
+              <p id="tableDate"></p>
+            </div>
+            <button id="refresh" type="button">Refresh</button>
+          </div>
+          <div class="filters">
+            <div><label for="query">Search rooms</label><input id="query" type="search" placeholder="Room name or ID"></div>
+            <div><label for="typeFilter">Room type</label><select id="typeFilter"><option value="">All types</option><option>Classroom</option><option>Laboratory</option></select></div>
+            <div><label for="capacityFilter">Minimum seats</label><input id="capacityFilter" type="number" min="1" max="500" step="1" placeholder="Any capacity"></div>
+            <div><label for="availabilityFilter">Availability</label><select id="availabilityFilter"><option value="">Any availability</option><option value="open">Has an open slot</option><option value="full">Fully booked</option></select></div>
+          </div>
+          <p id="tableMessage" class="table-message" role="status"></p>
+          <div class="table-scroll" tabindex="0" aria-label="Scrollable room timetable">
+            <table id="roomTable" hidden>
+              <thead id="roomHead"></thead>
+              <tbody id="roomRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="actionPanel" class="panel action-panel" aria-labelledby="actionTitle" hidden>
+        <div class="panel-heading">
+          <h2 id="actionTitle"></h2>
+          <button id="closeAction" type="button">Back to timetable</button>
+        </div>
+        <form id="formBox" hidden></form>
+        <pre id="output" tabindex="0" aria-label="Action result" hidden></pre>
+      </section>
+    </main>
+  </div>
 </body>
 </html>

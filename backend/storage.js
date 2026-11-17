@@ -25,16 +25,59 @@ function readRows(directory, file, header) {
     .filter(([first]) => first && first !== header);
 }
 
+function parseResource(row) {
+  const [id, name, type, capacity] = row;
+  if (row.length !== 4 || !validInteger(id, 9999) || !validName(name) ||
+      !['Classroom', 'Laboratory'].includes(type) || !validInteger(capacity, 500)) return null;
+  return { id: Number(id), name, type, capacity: Number(capacity) };
+}
+
+function parseBooking(row) {
+  const [id, resourceId, , date, slotText, name, status] = row;
+  const slot = slots.indexOf(slotText) + 1;
+  if (row.length !== 7 || !validInteger(id, 99999) || !validInteger(resourceId, 9999) ||
+      !validDate(date) || !slot || !validName(name) || !['Active', 'Cancelled'].includes(status)) return null;
+  return { id: Number(id), resourceId: Number(resourceId), date, slot, name, status };
+}
+
+function readAvailability(directory, date) {
+  const resources = new Map();
+  for (const row of readRows(directory, 'resources.txt', 'ID')) {
+    const resource = parseResource(row);
+    if (resource && !resources.has(resource.id)) resources.set(resource.id, { ...resource, bookedSlots: [] });
+    if (resources.size === 50) break;
+  }
+
+  const bookingIds = new Set();
+  const occupied = new Set();
+  for (const row of readRows(directory, 'bookings.txt', 'BookingID')) {
+    const booking = parseBooking(row);
+    if (!booking || !resources.has(booking.resourceId) || bookingIds.has(booking.id)) continue;
+    const key = `${booking.resourceId}/${booking.date}/${booking.slot}`;
+    if (booking.status === 'Active') {
+      if (occupied.has(key)) continue;
+      occupied.add(key);
+      if (booking.date === date) resources.get(booking.resourceId).bookedSlots.push(booking.slot);
+    }
+    bookingIds.add(booking.id);
+    if (bookingIds.size === 200) break;
+  }
+  return {
+    date,
+    slots: slots.map((label, index) => ({ id: index + 1, label: label.replace('_', ' ') })),
+    resources: [...resources.values()]
+  };
+}
+
 function importRows(db, directory) {
   const resourceIds = new Set();
   let skipped = 0;
   const insertResource = db.prepare('INSERT INTO resources VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING');
   for (const row of readRows(directory, 'resources.txt', 'ID')) {
-    const [id, name, type, capacity] = row;
-    if (row.length === 4 && resourceIds.size < 50 && validInteger(id, 9999) && validName(name) &&
-        (type === 'Classroom' || type === 'Laboratory') && validInteger(capacity, 500) &&
-        insertResource.run(Number(id), name, type, Number(capacity)).changes) {
-      resourceIds.add(Number(id));
+    const resource = parseResource(row);
+    if (resource && resourceIds.size < 50 &&
+        insertResource.run(resource.id, resource.name, resource.type, resource.capacity).changes) {
+      resourceIds.add(resource.id);
     } else {
       skipped++;
     }
@@ -43,12 +86,9 @@ function importRows(db, directory) {
   const insertBooking = db.prepare('INSERT INTO bookings VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING');
   let bookingCount = 0;
   for (const row of readRows(directory, 'bookings.txt', 'BookingID')) {
-    const [id, resourceId, , date, slotText, name, status] = row;
-    const slot = slots.indexOf(slotText) + 1;
-    if (row.length === 7 && bookingCount < 200 && validInteger(id, 99999) &&
-        validInteger(resourceId, 9999) && resourceIds.has(Number(resourceId)) &&
-        validDate(date) && slot && validName(name) && (status === 'Active' || status === 'Cancelled') &&
-        insertBooking.run(Number(id), Number(resourceId), date, slot, name, status).changes) {
+    const booking = parseBooking(row);
+    if (booking && bookingCount < 200 && resourceIds.has(booking.resourceId) &&
+        insertBooking.run(booking.id, booking.resourceId, booking.date, booking.slot, booking.name, booking.status).changes) {
       bookingCount++;
     } else {
       skipped++;
@@ -82,12 +122,14 @@ function refreshStorage(directory) {
       const skipped = importRows(db, directory);
       db.exec('COMMIT');
       if (skipped) console.warn(`SQLite synchronization skipped ${skipped} invalid or duplicate record(s).`);
+      return true;
     } finally {
       db.close(); // SQLite rolls back any transaction that did not commit.
     }
   } catch (error) {
     console.error(`SQLite synchronization failed: ${error.message}`);
+    return false;
   }
 }
 
-module.exports = { refreshStorage };
+module.exports = { readAvailability, refreshStorage, validDate };
