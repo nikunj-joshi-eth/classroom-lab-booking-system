@@ -177,7 +177,7 @@ const server = http.createServer((req, res) => {
         res.setHeader('Set-Cookie', `booking_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_SECONDS}`);
         return reply(200, output, { role: Number(role) });
       }
-      if (code === null || code < 0) return reply(500, output);
+      if (code === null || code < 0 || code === 2) return reply(500, output);
       if (code !== 0) return reply(400, output);
       if (output.includes('Warning: cannot write ')) return reply(500, output);
       return reply(output.includes('Access denied!') ? 403 : 200, output);

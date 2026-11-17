@@ -1,4 +1,4 @@
-# Classroom and Laboratory Resource Booking System
+# Classroom and Laboratory Resource Booking System Using Data Structures and Algorithms
 
 Second-year DSA PBL project. The main implementation is in **C (C99)**; a small web demonstration calls the C executable through Node.js.
 
@@ -18,12 +18,19 @@ Second-year DSA PBL project. The main implementation is in **C (C99)**; a small 
 Install GCC (MinGW-w64) and Node.js 24. Make sure `gcc` and `node` are on your PATH. From the project root:
 
 ```powershell
-cd backend
-gcc -std=c99 -Wall -Wextra main.c -o booking.exe
-./booking.exe
+Set-Location .\backend
+gcc -std=c99 -Wall -Wextra -Wconversion -pedantic -Werror main.c -o booking.exe
+if ($LASTEXITCODE -ne 0) { throw 'C build failed.' }
+.\booking.exe
 ```
 
-To start the web demo, exit the console and run `node server.js` from `backend/`. Open `http://127.0.0.1:3000`. Node.js includes the SQLite module, so no `npm install` or separate SQLite installation is needed. Run the console and web demo separately when they share the same files.
+To start the web demo, exit the console and run this from the same PowerShell directory:
+
+```powershell
+node .\server.js
+```
+
+Open `http://127.0.0.1:3000`. Node.js 24 includes SQLite, so no `npm install` or separate SQLite installation is needed.
 
 Choose a date on the dashboard and filter rooms by name or ID, type, minimum capacity, or availability. Administrators and teachers can select an available slot to open a prefilled booking form or select a booked slot to request the waiting list. Students can browse the timetable and reports. The timetable reads the primary text files and reflects active bookings only.
 
@@ -35,8 +42,10 @@ Existing `POST /api/<action>` endpoints retain their action names, input fields,
 
 Missing source files are treated as empty. Invalid and duplicate rows are skipped and counted in the server log. If synchronization fails, the server logs the error and rolls back any incomplete database transaction. The API also displays a synchronization warning when a write triggers the failure. The next startup or completed write operation retries synchronization.
 
-## Development notes
-- Root `main.c` is the earlier faculty-console baseline used by `run_tests.sh`. Build `backend/main.c` for current console and web use.
-- Preserve the C implementation and its syllabus-level algorithms when synchronizing the project files.
-- `docs/` contains the supplied C-only presentation and report. The report still has placeholders for console screenshots.
-- Runtime text files, SQLite databases and sidecars, and executables are ignored by Git.
+## Project files and limitations
+
+- `backend/main.c` is the authoritative C source for the console and web demo. Root `main.c` is the legacy faculty-console baseline used by `run_tests.sh`. The legacy suite's file-size and rename fault injection require Linux.
+- `docs/` contains the supplied C-only presentation and report. The report contains placeholders for console screenshots.
+- Run only one console or web server at a time against the same data directory. C prepares all three files before replacing them individually. A failure during replacement can leave a mix of old and new files.
+- The web server is a loopback demo with shared role passwords and in-memory sessions. It is intended for a local demonstration.
+- Git excludes generated booking data, SQLite databases and sidecars, compiled executables, and temporary files.

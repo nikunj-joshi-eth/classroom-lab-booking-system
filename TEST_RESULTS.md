@@ -1,3 +1,13 @@
+## v1.0.0 release verification
+
+The final build used `backend/main.c`, Windows MinGW GCC 6.3.0, Node.js 24.15.0, and headless Chrome. Tests used temporary data directories.
+
+- Strict C99 compilation passed with `-Wall -Wextra -Wconversion -pedantic -Werror`.
+- Browser and HTTP checks passed for all three roles, resource creation, listing, searching and sorting, timetable filters, booking, conflict prevention, cancellation, FIFO promotion, history and statistics.
+- SQLite checks passed for startup and post-write synchronization, persisted booking history after a Node restart, and a sync failure with the primary text files still available.
+- Focused C and API checks passed for invalid input, the maximum booking ID, student read-only exit, unreadable data files, and preservation of primary data on temporary-file staging failure.
+- Linux file-limit and rename fault injection and sanitizer coverage were outside this Windows release run. The historical legacy-suite results below apply to root `main.c`.
+
 ## Role-based reference package verification
 
 - Windows MinGW built `backend/main.c` as C99 with `-Wall -Wextra -Wconversion -pedantic` and emitted no warnings.

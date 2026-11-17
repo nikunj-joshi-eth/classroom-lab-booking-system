@@ -18,3 +18,5 @@ waiting.txt
 *.sqlite3
 *.sqlite3-*
 .env
+/web/
+/backend/package-lock.json
