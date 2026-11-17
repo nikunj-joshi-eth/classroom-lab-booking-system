@@ -30,7 +30,7 @@ fresh() { T=$(mktemp -d -p "$WORK"); cd "$T" || exit 1; }
 # run: program reads stdin; sets OUT (menu text removed), RAW, CODE
 run() {
     RAW=$(env $RUN_ENV "$BIN" 2>&1); CODE=$?
-    OUT=$(printf '%s\n' "$RAW" | sed '/^===== RESOURCE BOOKING SYSTEM/,/^0. Exit/d' | sed '/^$/d' \
+    OUT=$(printf '%s\n' "$RAW" | sed '/^===== FACULTY RESOURCE BOOKING SYSTEM/,/^0. Exit/d' | sed '/^$/d' \
           | sed 's/Enter your choice: //g; /^  [1-4]\. /d; /^Time slots:/d')
     if printf '%s' "$RAW" | grep -qE "Sanitizer|runtime error"; then SANBAD=1; fi
 }
@@ -412,10 +412,10 @@ tend
 # ---------- saving safety ----------
 fresh; tbegin T34 "Write failure does not damage existing records (file size limit)" "bookings.txt unchanged (same checksum); warning shown; no leftover .tmp file"
 printf '101 Room_101 1 60\n' > resources.txt
-n=0; : > bookings.txt; for m in 1 2 3 4 5 6 7; do for d in $(seq 1 28); do [ $n -lt 150 ] && { printf '%d 101 %02d-%02d-2027 1 Student_%d 1\n' $((n+1)) $d $m $n >> bookings.txt; n=$((n+1)); }; done; done
+n=0; : > bookings.txt; for m in 1 2 3 4 5 6 7; do for d in $(seq 1 28); do [ $n -lt 150 ] && { printf '%d 101 %02d-%02d-2027 1 Faculty_%d 1\n' $((n+1)) $d $m $n >> bookings.txt; n=$((n+1)); }; done; done
 SUM1=$(md5sum bookings.txt)
 RAW=$( ( trap '' XFSZ; ulimit -f 1; printf '5\n101\n01-12-2027\n2\nSue\n0\n' | "$BIN" 2>&1 ) ); CODE=$?
-OUT=$(printf '%s\n' "$RAW" | sed '/^===== RESOURCE BOOKING SYSTEM/,/^0. Exit/d' | sed '/^$/d')
+OUT=$(printf '%s\n' "$RAW" | sed '/^===== FACULTY RESOURCE BOOKING SYSTEM/,/^0. Exit/d' | sed '/^$/d')
 printf '%s' "$RAW" | grep -qE "Sanitizer|runtime error" && SANBAD=1
 expect "bookings.txt was not changed."
 expect_eq "bookings.txt checksum" "$SUM1" "$(md5sum bookings.txt)"

@@ -1,3 +1,20 @@
+## Current review — 17 November 2026
+
+Team: Nikunj Joshi (137), Resource Management; Khushi (148), Booking Management and Reports; Mansi (131), Cancellation and Waiting List.
+
+- Environment: Windows, Git Bash, MinGW GCC 6.3.0.
+- Build: `gcc -std=c99 -Wall -Wextra -Wconversion -pedantic main.c -o booking` passed with no warnings.
+- Existing suite: `USE_PLAIN=1 bash run_tests.sh` completed with **36 PASS / 5 FAIL**. T41 reports PASS for the plain build but explicitly marks sanitizer checking as not applicable; no sanitizer validation was performed.
+- T34 could not apply Linux `ulimit -f` (Invalid argument), so it did not simulate a write failure.
+- T36 expected a read-error message, while Windows rejects opening a directory and prints the cannot-read warning instead.
+- T38–T40 could not build/use the Linux `LD_PRELOAD` rename-failure helper. Their simulated failures were not exercised.
+- Additional native check passed: four waiting requests across three free slots promoted the first faculty for each slot, leaving the second request for the first slot waiting. The original startup traversal was subsequently restored for the minimal team update; see the rerun below.
+- Full Linux failure-injection and sanitizer verification remain outstanding. Historical results below describe an earlier version, not this review.
+
+Rerun after restoring the original startup algorithm: warning-free compilation; **36 PASS / 5 FAIL**, with the same platform limitations above. No algorithm or storage-format changes are included in the three-member commit.
+
+---
+
 # TEST_RESULTS.md
 
 Final verification of the Classroom and Laboratory Resource Booking System (`main.c`).

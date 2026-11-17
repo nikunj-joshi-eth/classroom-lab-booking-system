@@ -1,3 +1,10 @@
+## Faculty-oriented three-member review
+
+- Team: Nikunj Joshi (137), Resource Management; Khushi (148), Booking Management and Reports; Mansi (131), Cancellation and Waiting List.
+- Corrected module credits and faculty prompts/table headings; shortened redundant comments.
+- Kept the original startup waiting-list algorithm; reverted the earlier traversal simplification to keep this update minimal.
+- Preserved validation, booking history, reports, storage limits and safe file handling. No frontend or database added.
+
 # CHANGELOG.md
 
 ## Final corrections (this release)
@@ -17,7 +24,7 @@ Documentation updated: `README.md` (compile command, safe-saving description, te
 
 ## Previous release (final verification)
 
-The structure, menu, four-member module split and all existing features are unchanged. Only genuine problems found during the final verification were fixed. Items 1, 3, 4, 5, 6 and 7 were first reproduced on the previous version (see `TEST_RESULTS.md`, section 3). Items 2 and 8 were found by reading the code; they are protective changes and are covered by the tests listed in `TEST_RESULTS.md` (T36 for item 2).
+The structure, menu, module split and all existing features are unchanged. Only genuine problems found during the final verification were fixed. Items 1, 3, 4, 5, 6 and 7 were first reproduced on the previous version (see `TEST_RESULTS.md`, section 3). Items 2 and 8 were found by reading the code; they are protective changes and are covered by the tests listed in `TEST_RESULTS.md` (T36 for item 2).
 
 ### Fixes in `main.c`
 

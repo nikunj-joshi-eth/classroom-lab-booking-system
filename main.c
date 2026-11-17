@@ -1,7 +1,7 @@
 /*
- * Classroom and Laboratory Resource Booking System   (final version)
+ * Classroom and Laboratory Resource Booking System
  * Language : C (standard C99, no external libraries)
- * Team     : Nikunj Joshi, Khushi, Mansi, Sumit Kumar
+ * Team     : Nikunj Joshi (137), Khushi (148), Mansi (131)
  *
  * Data structures used:
  *   - Array of structures : resources and bookings
@@ -235,7 +235,7 @@ void addResource(void) {
         return;
     }
     r.id = readInt("Enter Resource ID (1-9999): ", 1, 9999);
-    if (findResourceIndex(r.id) != -1) {     /* duplicate ID check */
+    if (findResourceIndex(r.id) != -1) {
         printf("Error: Resource ID %d already exists!\n", r.id);
         return;
     }
@@ -292,7 +292,7 @@ void sortResources(void) {
 }
 
 /* =====================================================================
- * MODULE 2 : BOOKING MANAGEMENT    (Khushi - 25/SET/BCSE/148)
+ * MODULE 2 : BOOKING MANAGEMENT AND REPORTS    (Khushi - 25/SET/BCSE/148)
  * DSA: Arrays, Structures, Searching
  * ===================================================================== */
 
@@ -352,7 +352,7 @@ void bookResource(void) {
     }
     readDate(date);
     slot = readSlot();
-    readString("Enter your name: ", name, 30);
+    readString("Enter faculty name: ", name, 30);
 
     idx = findActiveBooking(resId, date, slot);
     if (idx == -1) {                                   /* room is free */
@@ -377,7 +377,7 @@ void bookResource(void) {
 
 void viewBookings(void) {
     int i, idx, found = 0;
-    printf("\n%-8s %-18s %-12s %-10s %-15s\n", "BookID", "Room", "Date", "Slot", "Booked By");
+    printf("\n%-8s %-18s %-12s %-10s %-15s\n", "BookID", "Room", "Date", "Slot", "Faculty");
     printf("-----------------------------------------------------------------\n");
     for (i = 0; i < bookCount; i++) {
         if (bookings[i].status == 1) {
@@ -496,7 +496,7 @@ void cancelBooking(void) {
     int id, i, found = -1;
     if (bookCount == 0) { printf("No bookings to cancel.\n"); return; }
     id = readInt("Enter Booking ID to cancel: ", 1, 999999);
-    for (i = 0; i < bookCount; i++)            /* linear search */
+    for (i = 0; i < bookCount; i++)
         if (bookings[i].bookingId == id) { found = i; break; }
     if (found == -1) { printf("Booking ID %d not found.\n", id); return; }
     if (bookings[found].status == 0) { printf("Booking %d is already cancelled.\n", id); return; }
@@ -511,9 +511,9 @@ void viewWaitingList(void) {
     Node *cur = front;
     int pos = 1, idx;
     if (cur == NULL) { printf("Waiting list is empty.\n"); return; }
-    printf("\n%-4s %-18s %-12s %-10s %-15s\n", "No.", "Room", "Date", "Slot", "Name");
+    printf("\n%-4s %-18s %-12s %-10s %-15s\n", "No.", "Room", "Date", "Slot", "Faculty");
     printf("-----------------------------------------------------------\n");
-    while (cur != NULL) {                      /* traverse the linked list */
+    while (cur != NULL) {
         idx = findResourceIndex(cur->resId);
         printf("%-4d %-18s %-12s %-10s %-15s\n", pos++,
                idx != -1 ? resources[idx].name : "Unknown", cur->date,
@@ -523,7 +523,7 @@ void viewWaitingList(void) {
 }
 
 /* =====================================================================
- * MODULE 4 : REPORTS AND STATISTICS   (Sumit Kumar - 25/SET/BCSE/145)
+ * MODULE 2 (continued) : REPORTS AND STATISTICS   (Khushi - 25/SET/BCSE/148)
  * DSA: Arrays, Traversal, Searching
  * ===================================================================== */
 
@@ -532,9 +532,9 @@ void bookingHistory(void) {
     int i, idx;
     if (bookCount == 0) { printf("No booking history.\n"); return; }
     printf("\n%-8s %-18s %-12s %-10s %-15s %-10s\n", "BookID", "Room", "Date", "Slot",
-           "Booked By", "Status");
+           "Faculty", "Status");
     printf("---------------------------------------------------------------------------\n");
-    for (i = 0; i < bookCount; i++) {          /* traversal */
+    for (i = 0; i < bookCount; i++) {
         idx = findResourceIndex(bookings[i].resId);
         printf("%-8d %-18s %-12s %-10s %-15s %-10s\n", bookings[i].bookingId,
                idx != -1 ? resources[idx].name : "Unknown", bookings[i].date,
@@ -550,7 +550,7 @@ void bookingStatistics(void) {
     for (i = 0; i < bookCount; i++) {
         if (bookings[i].status == 1) active++;
         else cancelled++;
-        idx = findResourceIndex(bookings[i].resId);   /* searching */
+        idx = findResourceIndex(bookings[i].resId);
         if (idx != -1) count[idx]++;
     }
 
@@ -560,7 +560,7 @@ void bookingStatistics(void) {
     printf("Cancelled bookings : %d\n", cancelled);
     printf("Waiting requests   : %d\n", waitCount);
 
-    for (i = 0; i < resCount; i++)                    /* find the maximum */
+    for (i = 0; i < resCount; i++)
         if (count[i] > 0 && (best == -1 || count[i] > count[best]))
             best = i;
     if (best == -1)
@@ -778,7 +778,7 @@ void loadAll(void) {
                 /* a person cannot wait for a slot that he or she already holds */
                 if (!(holder != -1 && strcmp(bookings[holder].bookedBy, ntmp) == 0) &&
                     enqueueWaiting(resId, dtmp, slot, ntmp))
-                    continue;                          /* record accepted */
+                    continue;
             }
             skipped++;
         }
@@ -803,7 +803,7 @@ int main(void) {
            resCount, bookCount, waitCount);
 
     do {
-        printf("\n===== RESOURCE BOOKING SYSTEM =====\n");
+        printf("\n===== FACULTY RESOURCE BOOKING SYSTEM =====\n");
         printf("1. Add Classroom/Lab\n");
         printf("2. View Resources\n");
         printf("3. Search Resource\n");
@@ -835,6 +835,6 @@ int main(void) {
         }
     } while (choice != 0);
 
-    freeWaitingList();                           /* release all queue nodes */
+    freeWaitingList();
     return 0;
 }
