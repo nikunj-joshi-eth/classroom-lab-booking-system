@@ -143,6 +143,12 @@ function showOverview() {
 $('closeAction').onclick = showOverview;
 $('day').onchange = loadAvailability;
 $('refresh').onclick = loadAvailability;
+// Keep the dashboard in sync with console changes while it is visible.
+setInterval(() => {
+  if (role !== 0 && !$('overview').hidden && document.visibilityState === 'visible') {
+    loadAvailability();
+  }
+}, 5000);
 for (const id of ['query', 'typeFilter', 'capacityFilter', 'availabilityFilter']) {
   $(id).addEventListener('input', () => renderTimetable());
 }
@@ -167,6 +173,7 @@ async function loadAvailability() {
   }
   availability = result;
   renderTimetable();
+  if (result.syncWarning) notify('Rooms are current, but the SQLite mirror could not be refreshed.', 'warning');
 }
 
 function renderTimetable(message = '') {
