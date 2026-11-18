@@ -1,5 +1,22 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { createHash } = require('node:crypto');
+
+// Text files remain the single source of truth for both console and web.
+let lastMirroredFingerprint = null;
+function fingerprint(directory) {
+  const hash = createHash('sha256');
+  for (const file of ['resources.txt', 'bookings.txt', 'waiting.txt']) {
+    hash.update(file);
+    try { hash.update(fs.readFileSync(path.join(directory, file))); }
+    catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      hash.update('MISSING');
+    }
+  }
+  return hash.digest('hex');
+}
+
 
 const slots = ['9-10_AM', '10-11_AM', '11-12_PM', '2-3_PM'];
 const validInteger = (value, max) => /^\+?[0-9]+$/.test(value) && Number(value) >= 1 && Number(value) <= max;
@@ -122,6 +139,7 @@ function refreshStorage(directory) {
       const skipped = importRows(db, directory);
       db.exec('COMMIT');
       if (skipped) console.warn(`SQLite synchronization skipped ${skipped} invalid or duplicate record(s).`);
+      lastMirroredFingerprint = fingerprint(directory);
       return true;
     } finally {
       db.close(); // SQLite rolls back any transaction that did not commit.
@@ -132,4 +150,16 @@ function refreshStorage(directory) {
   }
 }
 
-module.exports = { readAvailability, refreshStorage, validDate };
+// Console operations cannot notify Node directly. Check whether their text files
+// changed when the dashboard requests fresh availability.
+function syncIfChanged(directory) {
+  try {
+    if (fingerprint(directory) === lastMirroredFingerprint) return true;
+    return refreshStorage(directory);
+  } catch (error) {
+    console.error(`Cannot check shared storage: ${error.message}`);
+    return false;
+  }
+}
+
+module.exports = { readAvailability, refreshStorage, syncIfChanged, validDate };
