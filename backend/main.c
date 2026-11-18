@@ -7,11 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 #define MAX_RES        50
 #define MAX_BOOK       200
@@ -58,8 +53,7 @@ Node *front = NULL;
 Node *rear = NULL;          
 int waitCount = 0;
 
-int apiMode = 0;
-int storageReadFailed = 0;
+int apiMode = 0;            
 
 const char *slotNames[NUM_SLOTS + 1] = {
     "", "9-10 AM", "10-11 AM", "11-12 PM", "2-3 PM"
@@ -75,7 +69,7 @@ int  saveAll(void);
 
 /* Shared input and validation - Nikunj Joshi, Mansi, Khushi */
 int isSpaceChar(char c) {
-    return c == ' ' || c == '\t' || c == '\r' || c == '\v' || c == '\f';
+    return c == ' ' || c == '\t' || c == '\r';
 }
 
 
@@ -100,13 +94,6 @@ int readLine(char *buf, int size) {
 }
 
 
-void stopOnApiInputError(void) {
-    if (apiMode) {
-        freeWaitingList();
-        exit(EXIT_FAILURE);
-    }
-}
-
 int readInt(const char *prompt, int min, int max) {
     char buf[50], *end;
     long val;
@@ -120,7 +107,6 @@ int readInt(const char *prompt, int min, int max) {
                 return (int)val;
         }
         printf("Invalid input! Enter a number from %d to %d.\n", min, max);
-        stopOnApiInputError();
     }
 }
 
@@ -132,7 +118,6 @@ void readString(const char *prompt, char *dest, int size) {
         if (!apiMode) printf("%s", prompt);
         if (!readLine(buf, sizeof(buf))) {
             printf("Input too long! Enter 1 to %d characters.\n", size - 1);
-            stopOnApiInputError();
             continue;
         }
         p = buf;
@@ -143,7 +128,6 @@ void readString(const char *prompt, char *dest, int size) {
             p[--len] = '\0';
         if (len == 0 || len >= size) {
             printf("Invalid input! Enter 1 to %d characters.\n", size - 1);
-            stopOnApiInputError();
             continue;
         }
         for (i = 0; i < len; i++)
@@ -196,7 +180,6 @@ void readDate(char *dest) {
             return;
         }
         printf("Invalid date! Use a real date from 2024 to 2100, e.g. 15-08-2026.\n");
-        stopOnApiInputError();
     }
 }
 
@@ -317,7 +300,7 @@ int bookingIdExists(int id) {
 
 int createBooking(int resId, const char *date, int slot, const char *name) {
     Booking *b;
-    if (bookCount >= MAX_BOOK || nextBookingId > MAX_BOOKING_ID)
+    if (bookCount >= MAX_BOOK)
         return 0;
     b = &bookings[bookCount++];
     b->bookingId = nextBookingId++;
@@ -355,8 +338,6 @@ void bookResource(void) {
         id = createBooking(resId, date, slot, name);
         if (id != 0)
             printf("Booking confirmed! Booking ID = %d\n", id);
-        else
-            printf("No booking IDs remain.\n");
     } else if (strcmp(bookings[idx].bookedBy, name) == 0) {
         printf("You already hold this booking (Booking ID = %d).\n", bookings[idx].bookingId);
     } else {
@@ -486,8 +467,7 @@ int processWaiting(int resId, const char *date, int slot) {
         if (cur->resId == resId && cur->slot == slot && strcmp(cur->date, date) == 0) {
             id = createBooking(resId, date, slot, cur->bookedBy);
             if (id == 0) {          
-                printf("%s Waiting request of %s could not be confirmed.\n",
-                       bookCount >= MAX_BOOK ? "Booking storage is full." : "No booking IDs remain.",
+                printf("Booking storage is full. Waiting request of %s could not be confirmed.\n",
                        cur->bookedBy);
                 return 0;
             }
@@ -604,56 +584,13 @@ int statusFromText(const char *text) {
 }
 
 
-/* Prepare all three snapshots before replacing any primary file. */
-int closeStagedFile(FILE *fp, const char *name) {
-    int failed = ferror(fp);
-    if (fclose(fp) != 0 || failed) {
-        printf("Warning: cannot write %s. Temporary write failed.\n", name);
-        return 0;
-    }
-    return 1;
-}
-
-int replaceDataFile(const char *temp, const char *name) {
-#ifdef _WIN32
-    return MoveFileExA(temp, name, MOVEFILE_REPLACE_EXISTING) != 0;
-#else
-    return rename(temp, name) == 0;
-#endif
-}
-
-FILE *openDataFile(const char *name) {
-    FILE *fp = fopen(name, "r");
-    if (fp == NULL && errno != ENOENT) {
-        printf("Warning: cannot read %s.\n", name);
-        storageReadFailed = 1;
-    }
-    return fp;
-}
-
-void closeDataFile(FILE *fp, const char *name) {
-    int failed = ferror(fp);
-    if (fclose(fp) != 0 || failed) {
-        printf("Warning: cannot read %s.\n", name);
-        storageReadFailed = 1;
-    }
-}
-
 int saveAll(void) {
     FILE *fp;
     Node *cur;
     int i, idx, ok = 1;
     char stext[16];
-    const char *files[] = {RES_FILE, BOOK_FILE, WAIT_FILE};
-    const char *temps[] = {RES_FILE ".tmp", BOOK_FILE ".tmp", WAIT_FILE ".tmp"};
-    int staged[3] = {0, 0, 0};
 
-    if (storageReadFailed) {
-        printf("Warning: cannot write data after a storage read failure.\n");
-        return 0;
-    }
-
-    fp = fopen(temps[0], "w");
+    fp = fopen(RES_FILE, "w");
     if (fp == NULL) {
         printf("Warning: cannot write %s.\n", RES_FILE);
         ok = 0;
@@ -662,12 +599,10 @@ int saveAll(void) {
         for (i = 0; i < resCount; i++)
             fprintf(fp, "%-6d %-20s %-12s %-8d\n", resources[i].id, resources[i].name,
                     typeName(resources[i].type), resources[i].capacity);
-        staged[0] = 1;
-        if (!closeStagedFile(fp, RES_FILE))
-            ok = 0;
+        fclose(fp);
     }
 
-    fp = fopen(temps[1], "w");
+    fp = fopen(BOOK_FILE, "w");
     if (fp == NULL) {
         printf("Warning: cannot write %s.\n", BOOK_FILE);
         ok = 0;
@@ -682,12 +617,10 @@ int saveAll(void) {
                     bookings[i].date, stext, bookings[i].bookedBy,
                     bookings[i].status ? "Active" : "Cancelled");
         }
-        staged[1] = 1;
-        if (!closeStagedFile(fp, BOOK_FILE))
-            ok = 0;
+        fclose(fp);
     }
 
-    fp = fopen(temps[2], "w");
+    fp = fopen(WAIT_FILE, "w");
     if (fp == NULL) {
         printf("Warning: cannot write %s.\n", WAIT_FILE);
         ok = 0;
@@ -701,23 +634,8 @@ int saveAll(void) {
                     idx != -1 ? resources[idx].name : "Unknown", cur->date, stext,
                     cur->bookedBy);
         }
-        staged[2] = 1;
-        if (!closeStagedFile(fp, WAIT_FILE))
-            ok = 0;
+        fclose(fp);
     }
-    if (ok) {
-        for (i = 0; i < 3; i++) {
-            if (!replaceDataFile(temps[i], files[i])) {
-                printf("Warning: cannot write %s. Replacement failed.\n", files[i]);
-                ok = 0;
-                break;
-            }
-            staged[i] = 0;
-        }
-    }
-    for (i = 0; i < 3; i++)
-        if (staged[i])
-            remove(temps[i]);
     return ok;
 }
 
@@ -729,7 +647,7 @@ void loadAll(void) {
     Booking b;
     int resId, slot, pos, skipped = 0;
 
-    fp = openDataFile(RES_FILE);
+    fp = fopen(RES_FILE, "r");
     if (fp != NULL) {
         while (fgets(line, sizeof(line), fp) != NULL) {
             if (line[0] < '0' || line[0] > '9')
@@ -743,10 +661,10 @@ void loadAll(void) {
             } else
                 skipped++;
         }
-        closeDataFile(fp, RES_FILE);
+        fclose(fp);
     }
 
-    fp = openDataFile(BOOK_FILE);
+    fp = fopen(BOOK_FILE, "r");
     if (fp != NULL) {
         while (fgets(line, sizeof(line), fp) != NULL) {
             if (line[0] < '0' || line[0] > '9')
@@ -768,10 +686,10 @@ void loadAll(void) {
             } else
                 skipped++;
         }
-        closeDataFile(fp, BOOK_FILE);
+        fclose(fp);
     }
 
-    fp = openDataFile(WAIT_FILE);
+    fp = fopen(WAIT_FILE, "r");
     if (fp != NULL) {
         while (fgets(line, sizeof(line), fp) != NULL) {
             if (line[0] < '0' || line[0] > '9')
@@ -783,7 +701,7 @@ void loadAll(void) {
                 continue;
             skipped++;
         }
-        closeDataFile(fp, WAIT_FILE);
+        fclose(fp);
     }
 
     if (skipped > 0)
@@ -870,13 +788,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 4 && strcmp(argv[1], "--api") == 0) {
         apiMode = 1;
-        if (strcmp(argv[3], "login") != 0) {
-            loadAll();
-            if (storageReadFailed) {
-                freeWaitingList();
-                return 2; /* Storage error reported to the Node server. */
-            }
-        }
+        loadAll();
         runApi(atoi(argv[2]), argv[3]);
         freeWaitingList();
         return 0;
@@ -939,14 +851,11 @@ int main(int argc, char *argv[]) {
                 case 9:  bookingHistory();           break;
                 case 10: bookingStatistics();        break;
                 case 11:
-                    if (role != 3)
-                        saveAll();
+                    saveAll();
                     printf("Logged out.\n");
                     break;
                 case 0:
-                    if (role == 3)
-                        printf("Goodbye!\n");
-                    else if (saveAll())
+                    if (saveAll())
                         printf("Data saved. Goodbye!\n");
                     else
                         printf("Goodbye! (Some data could not be saved.)\n");
