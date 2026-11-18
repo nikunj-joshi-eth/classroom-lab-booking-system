@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { randomUUID } = require('node:crypto');
-const { readAvailability, refreshStorage, validDate } = require('./storage');
+const { readAvailability, refreshStorage, syncIfChanged, validDate } = require('./storage');
 
 const PORT = 3000;
 const EXE = path.join(__dirname, process.platform === 'win32' ? 'booking.exe' : 'booking');
@@ -152,7 +152,9 @@ const server = http.createServer((req, res) => {
       if (action === 'availability') {
         try {
           await queue;
-          return reply(200, '', readAvailability(__dirname, answers[0].trim()));
+          const snapshot = readAvailability(__dirname, answers[0].trim());
+          const mirrored = syncIfChanged(__dirname);
+          return reply(200, '', { ...snapshot, syncWarning: !mirrored });
         } catch (error) {
           console.error('Cannot read availability:', error.message);
           return reply(500, 'Availability is unavailable. Check the primary data files.');
@@ -166,6 +168,8 @@ const server = http.createServer((req, res) => {
         return String(Number(value));
       });
       const { output, code } = await runC(role, action, input);
+      // Read actions may follow edits made in the standalone console.
+      if (action !== 'login' && !Object.hasOwn(WRITE_ROLES, action) && code === 0) syncIfChanged(__dirname);
       if (action === 'login') {
         if (!/^LOGIN_OK\s*$/m.test(output)) return reply(code === null ? 500 : 401, output);
         sessions.delete(cookie);
