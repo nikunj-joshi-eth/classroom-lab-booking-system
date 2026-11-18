@@ -42,10 +42,31 @@ Existing `POST /api/<action>` endpoints retain their action names, input fields,
 
 Missing source files are treated as empty. Invalid and duplicate rows are skipped and counted in the server log. If synchronization fails, the server logs the error and rolls back any incomplete database transaction. The API also displays a synchronization warning when a write triggers the failure. The next startup or completed write operation retries synchronization.
 
+## Shared console and web storage
+
+**Single source of truth:** Both console and web use `backend/resources.txt`, `backend/bookings.txt`, and `backend/waiting.txt`. SQLite (`backend/booking.db`) is only a synchronized mirror.
+
+From the repository root, start the exact annotated C console using:
+
+```powershell
+.\run_console.ps1
+```
+
+For the web dashboard (in another PowerShell window):
+
+```powershell
+Set-Location .\backend
+node .\server.js
+```
+
+Open http://127.0.0.1:3000. When the dashboard is visible, it refreshes its room timetable every five seconds. Node also detects console changes when the dashboard is queried and refreshes the SQLite mirror.
+
+**Important:** Exit the standalone console before making web booking/resource changes and vice versa. The exact annotated C source is preserved unchanged, and it does NOT implement file locking or safe atomic multi-file writes. Simultaneous writes from the console and web are unsafe. Use backups for important records. The historical v1.0.0 hardened C code remains on `main`.
+
 ## Project files and limitations
 
-- `backend/main.c` is the authoritative C source for the console and web demo. Root `main.c` is the legacy faculty-console baseline used by `run_tests.sh`. The legacy suite's file-size and rename fault injection require Linux.
+- `backend/main.c` on this branch is the exact uploaded annotated C source for the console and web demo. Root `main.c` is the legacy faculty-console baseline used by `run_tests.sh`. The legacy suite's file-size and rename fault injection require Linux.
 - `docs/` contains the supplied C-only presentation and report. The report contains placeholders for console screenshots.
-- Run only one console or web server at a time against the same data directory. C prepares all three files before replacing them individually. A failure during replacement can leave a mix of old and new files.
+- Console and web may be open together for viewing, but must not perform write actions concurrently. The exact uploaded C source overwrites text files directly, with no transaction/locking safeguards. A failed write or unreadable file can damage records.
 - The web server is a loopback demo with shared role passwords and in-memory sessions. It is intended for a local demonstration.
 - Git excludes generated booking data, SQLite databases and sidecars, compiled executables, and temporary files.
